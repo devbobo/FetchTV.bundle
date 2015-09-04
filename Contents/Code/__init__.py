@@ -1,16 +1,8 @@
 import re
 
-FetchSoap = SharedCodeService.fetch.FetchSoap
-
-try:
-    from html.parser import HTMLParser  # py3
-except ImportError:
-    from HTMLParser import HTMLParser  # py2
-
-unescape = HTMLParser().unescape
+FetchPost = SharedCodeService.fetch.FetchPost
 
 FETCHTV_PREFIX = '/video/fetchtv'
-FETCHTV_URL = 'http://172.16.1.15:49152/web/cds_control'
 
 ####################################################################################################
 def Start():
@@ -26,7 +18,7 @@ def MainMenu():
 ####################################################################################################
 @route(FETCHTV_PREFIX + '/{objectId}', allow_sync=True)
 def GetContainer(objectId, title):
-    data = Post(objectId)
+    data = FetchPost(objectId, "BrowseDirectChildren")
     
     if data.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}container") == None:
         return GetContent(data.findall("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}item"), title)
@@ -62,15 +54,5 @@ def GetContent(items, label):
     oc.objects.sort(key=lambda obj: obj.originally_available_at)
         
     return oc
-    
-####################################################################################################
-def Post(objectId):
-    postData = FetchSoap(objectId, "BrowseDirectChildren")
-    result = HTTP.Request(FETCHTV_URL, headers={"Content-Type": "text/xml", "SOAPACTION": '"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"'}, data=postData, cacheTime=0)
-    xml = XML.ObjectFromString(result.content)
-    
-    str = unescape(xml.Body["{urn:schemas-upnp-org:service:ContentDirectory:1}BrowseResponse"]["{}Result"].text)
-    str = str.replace("&", "&amp;")
-    
-    return XML.ElementFromString(str)
+
 

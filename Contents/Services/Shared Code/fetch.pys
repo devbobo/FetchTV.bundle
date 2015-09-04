@@ -1,3 +1,21 @@
+try:
+    from html.parser import HTMLParser  # py3
+except ImportError:
+    from HTMLParser import HTMLParser  # py2
+
+unescape = HTMLParser().unescape
+
+FETCHTV_URL = 'http://172.16.1.15:49152/web/cds_control'
+
+####################################################################################################
+def FetchPost(objectId, action, cacheTime = CACHE_1HOUR):
+    result = HTTP.Request(FETCHTV_URL, headers={"Content-Type": "text/xml", "SOAPACTION": '"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"'}, data=FetchSoap(objectId, action), cacheTime=cacheTime)
+    xml = XML.ObjectFromString(result.content)
+
+    str = unescape(xml.Body["{urn:schemas-upnp-org:service:ContentDirectory:1}BrowseResponse"]["{}Result"].text)
+    str = str.replace("&", "&amp;")
+
+    return XML.ElementFromString(str)
 
 ####################################################################################################
 def FetchSoap(objectId, action):
