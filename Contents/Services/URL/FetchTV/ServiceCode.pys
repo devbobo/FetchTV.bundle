@@ -1,4 +1,5 @@
 import datetime, re
+from fetch import FetchSoap
 
 try:
     from html.parser import HTMLParser  # py3
@@ -59,7 +60,7 @@ def GetObjectFromUrl(url):
 
 ####################################################################################################
 def Post(objectId):
-    result = HTTP.Request(FETCHTV_URL, headers={"Content-Type": "text/xml", "SOAPACTION": '"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"'}, data=getSoapEnvelope(objectId))
+    result = HTTP.Request(FETCHTV_URL, headers={"Content-Type": "text/xml", "SOAPACTION": '"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"'}, data=FetchSoap(objectId, "BrowseMetadata"))
     xml = XML.ObjectFromString(result.content)
     
     str = unescape(xml.Body["{urn:schemas-upnp-org:service:ContentDirectory:1}BrowseResponse"]["{}Result"].text)
@@ -67,16 +68,3 @@ def Post(objectId):
 
     return XML.ElementFromString(str)
 
-####################################################################################################
-def getSoapEnvelope(objectId):
-    return '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'\
-            '<s:Body><u:Browse xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1">'\
-            '<ObjectID>' + objectId + '</ObjectID>'\
-            '<BrowseFlag>BrowseMetadata</BrowseFlag>'\
-            '<Filter>*</Filter>'\
-            '<StartingIndex>0</StartingIndex>'\
-            '<RequestedCount>0</RequestedCount>'\
-            '<SortCriteria></SortCriteria>'\
-            '</u:Browse>'\
-            '</s:Body>'\
-            '</s:Envelope>'

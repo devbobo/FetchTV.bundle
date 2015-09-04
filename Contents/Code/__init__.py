@@ -1,5 +1,7 @@
 import re
 
+FetchSoap = SharedCodeService.fetch.FetchSoap
+
 try:
     from html.parser import HTMLParser  # py3
 except ImportError:
@@ -63,7 +65,7 @@ def GetContent(items, label):
     
 ####################################################################################################
 def Post(objectId):
-    postData = getSoapEnvelope(objectId)
+    postData = FetchSoap(objectId, "BrowseDirectChildren")
     result = HTTP.Request(FETCHTV_URL, headers={"Content-Type": "text/xml", "SOAPACTION": '"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"'}, data=postData, cacheTime=0)
     xml = XML.ObjectFromString(result.content)
     
@@ -72,16 +74,3 @@ def Post(objectId):
     
     return XML.ElementFromString(str)
 
-####################################################################################################
-def getSoapEnvelope(objectId):
-    return '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'\
-            '<s:Body><u:Browse xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1">'\
-            '<ObjectID>' + objectId + '</ObjectID>'\
-            '<BrowseFlag>BrowseDirectChildren</BrowseFlag>'\
-            '<Filter>*</Filter>'\
-            '<StartingIndex>0</StartingIndex>'\
-            '<RequestedCount>0</RequestedCount>'\
-            '<SortCriteria></SortCriteria>'\
-            '</u:Browse>'\
-            '</s:Body>'\
-            '</s:Envelope>'

@@ -1,0 +1,14 @@
+
+####################################################################################################
+def FetchSoap(objectId, action):
+    return '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'\
+            '<s:Body><u:Browse xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1">'\
+            '<ObjectID>' + objectId + '</ObjectID>'\
+            '<BrowseFlag>' + action + '</BrowseFlag>'\
+            '<Filter>*</Filter>'\
+            '<StartingIndex>0</StartingIndex>'\
+            '<RequestedCount>0</RequestedCount>'\
+            '<SortCriteria></SortCriteria>'\
+            '</u:Browse>'\
+            '</s:Body>'\
+            '</s:Envelope>'
