@@ -1,0 +1,82 @@
+import datetime, re
+
+try:
+    from html.parser import HTMLParser  # py3
+except ImportError:
+    from HTMLParser import HTMLParser  # py2
+
+unescape = HTMLParser().unescape
+
+FETCHTV_PREFIX = '/video/fetchtv'
+FETCHTV_URL = 'http://172.16.1.15:49152/web/cds_control'
+
+HTTP.CacheTime = CACHE_1DAY
+
+####################################################################################################
+def NormalizeURL(url):
+    return url
+    
+####################################################################################################
+def MetadataObjectForURL(url):
+    object = GetObjectFromUrl(url)
+    
+    res = object.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}res")
+
+    title = ''.join(object.find("{http://purl.org/dc/elements/1.1/}title").text)
+    title = re.sub(res.get("parentTaskName") + " - ", "", title)
+    
+    return EpisodeObject(
+        title = title,
+        summary = object.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}description").text,
+        originally_available_at = datetime.datetime.strptime(object.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}recordedStartDateTime").text, "%A %d %B %Y %I:%M %p").date(),
+        show = res.get("parentTaskName"),
+        source_title = "FetchTV",
+        duration = Datetime.MillisecondsFromString(res.get("duration")),
+        url = res.text
+    )
+
+####################################################################################################
+def MediaObjectsForURL(url):
+    res = GetObjectFromUrl(url).find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}res")
+    
+    if (res.get("size") == "-1"):
+        return []
+        
+    return [
+        MediaObject(
+            audio_codec = AudioCodec.AAC,
+            video_codec = VideoCodec.H264,
+            container = "mpegts",
+            parts = [PartObject(key = RTMPVideoURL(url))],
+        )
+    ]
+
+####################################################################################################
+def GetObjectFromUrl(url):
+    m = re.search('(\d+)$', url)
+    data = Post(m.group(1))
+    return data.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}item")
+
+####################################################################################################
+def Post(objectId):
+    result = HTTP.Request(FETCHTV_URL, headers={"Content-Type": "text/xml", "SOAPACTION": '"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"'}, data=getSoapEnvelope(objectId))
+    xml = XML.ObjectFromString(result.content)
+    
+    str = unescape(xml.Body["{urn:schemas-upnp-org:service:ContentDirectory:1}BrowseResponse"]["{}Result"].text)
+    str = str.replace("&", "&amp;")
+
+    return XML.ElementFromString(str)
+
+####################################################################################################
+def getSoapEnvelope(objectId):
+    return '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'\
+            '<s:Body><u:Browse xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1">'\
+            '<ObjectID>' + objectId + '</ObjectID>'\
+            '<BrowseFlag>BrowseMetadata</BrowseFlag>'\
+            '<Filter>*</Filter>'\
+            '<StartingIndex>0</StartingIndex>'\
+            '<RequestedCount>0</RequestedCount>'\
+            '<SortCriteria></SortCriteria>'\
+            '</u:Browse>'\
+            '</s:Body>'\
+            '</s:Envelope>'
