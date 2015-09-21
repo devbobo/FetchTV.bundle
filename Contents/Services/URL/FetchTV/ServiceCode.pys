@@ -28,9 +28,6 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
     res = GetObjectFromUrl(url).find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}res")
 
-    if (res.get("size") == "-1"):
-        return []
-
     return [
         MediaObject(
             audio_codec = AudioCodec.AAC,
